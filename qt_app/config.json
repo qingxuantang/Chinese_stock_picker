@@ -1,0 +1,35 @@
+{
+    "kelly_fraction": 1,
+    "unc_kelly_fraction": 0.15,
+    "max_lookback_years": 0.25,
+    "estimation_mode": ["hist","fixed","custom"],
+    "fixed_annual_risk_free_rate": 0.0290,
+    "fixed_annual_excess_return_rate": 0.02,
+    "use_Ledoit_Wolf": true,
+    "max_position_size": 0.99,
+    "capital": 100000,
+    
+    "strategy_name": "str3",
+    "trade_type": ["sim","real"],
+    "limit_sell_param_abs": 0.015,
+    "holding_rule": 0.6, 
+    "max_symbol_dailyopen": 20,
+    "fixed_replenish_rate": 0.05,
+    "exchange_list": ["sz","sh"],
+    "interval_list": ["daily"],
+    "outputsize_list": ["full","compact"],
+
+    "data_path": "../data/",
+    "fi_list":["INCOME_STATEMENT","BALANCE_SHEET"],
+    "fi_list_yfinance":["income_stmt","quarterly_income_stmt","balance_sheet","quarterly_balance_sheet","cashflow","quarterly_cashflow"],
+    "broker_picked_stock_path":"../data/eastmoney_parser/grpStockReportSummary/stock.xlsx",
+    "report_url": "https://data.eastmoney.com/report/stock.jshtml",
+    "end_page": 15,
+
+
+    "solvency_ratio_margin": 3,
+    "price_change_margin_lowerbound": -0.01,
+    "price_change_margin_higherbound": 0.15
+}
+
+
