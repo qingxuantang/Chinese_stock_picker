@@ -1,2 +1,2 @@
-# Chinese_stock_picker
-A streamlit app integrating web parser, debt ratio calculator and kelly criterion optimization for stock picking.
+# qt_app
+Streamlit based app intergrating Langchain for quantitative trading strategy prediction.

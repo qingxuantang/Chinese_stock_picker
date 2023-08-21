@@ -1,0 +1,15 @@
+sqlalchemy
+pandas
+numpy
+googlesearch-python
+importlib
+requests
+streamlit
+langchain
+beautifulsoup4
+asyncio
+pyppeteer
+yfinance
+cvxopt
+sklearn
+glob2
