@@ -2,6 +2,8 @@
 
 This streamlit-based app is a dynamic and comprehensive tool designed to assist finance professionals in identifying promising Chinese stocks for short-term or long-term trading. Utilizing technologies like Streamlit and data from EastMoney, it provides an intuitive interface and data-driven insights.
 
+![微信图片_20230827231210](https://github.com/qingxuantang/Chinese_stock_picker/assets/18418339/31a6c3b1-c162-4689-af41-bf3c6086f0b3)
+
 ## Features
 
 <bold>User-Friendly Interface:</bold> Search and explore stocks with ease.
