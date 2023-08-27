@@ -14,14 +14,14 @@ class ReportScraper:
 
     def __init__(self):
         self.config = utils.config
-        self.data_path = '../data/'
+        self.data_path = self.config['data_path']
         self.pkg_path = 'eastmoney_parser/'
         self.folder_path = 'grpStockReportSummary/'
 
 
     async def main(self,end_page):
         # 启动浏览器
-        browser = await launch()
+        browser = await launch(headless=True, args=['--no-sandbox'])
         page = await browser.newPage()
         url = self.config['report_url']
         await page.goto(url)
@@ -62,9 +62,11 @@ class ReportScraper:
 
             print('数据读取完成')
             df = pd.DataFrame(rows)
-
+            #print("df: ",df)
+            
             # 保存到Excel
             path = self.data_path + self.pkg_path + self.folder_path + f"{pagenumber}.xlsx"
+            #print("excel saving path: ",path)
             df.to_excel(path, index=False)
             print(f'保存为{pagenumber}.xlsx完成')
 
