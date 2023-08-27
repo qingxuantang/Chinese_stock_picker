@@ -2,7 +2,7 @@ sqlalchemy
 pandas
 numpy
 googlesearch-python
-importlib
+openpyxl
 requests
 streamlit
 langchain
@@ -11,5 +11,7 @@ asyncio
 pyppeteer
 yfinance
 cvxopt
-sklearn
+scikit-learn
 glob2
+openai
+pandas_datareader
