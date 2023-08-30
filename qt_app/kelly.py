@@ -50,7 +50,14 @@ class KellyCriterion():
         #eg. tblStockPickedWithSolvencyR2023-08-19.csv
         st_column=str(1)
         folder_path = 'short_term_solvency_ratio/'
-        csv_filepath = glob.glob(self.data_path+folder_path+'*.csv')[-1]
+        #csv_filepath = glob.glob(self.data_path+folder_path+'*.csv')[-1]
+        #test
+        csv_filepath = glob.glob(self.data_path + folder_path + 'tblStockPickedWithSolvencyR*.csv')
+        csv_filepath = sorted(csv_filepath, key=lambda x: datetime.strptime(x.split('tblStockPickedWithSolvencyR')[-1].rstrip('.csv'), '%Y-%m-%d'))
+        csv_filepath = csv_filepath[-1]
+        
+        print("csv_filepath: ",csv_filepath)
+        
         csv_filename = os.path.basename(csv_filepath)
         stock_df = utils.loadDfFromCsv(path_head=csv_filename,exchange='',path_tail='',data_path=self.data_path,pkg_path=folder_path)
         stock_df[st_column] = stock_df[st_column].astype(str)
