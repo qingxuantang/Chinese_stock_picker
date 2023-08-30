@@ -2,6 +2,7 @@
 def main():
     '''Main function for the app.'''
     import os
+    import time
     import streamlit as st 
     from langchain.llms import OpenAI
     from langchain.prompts import PromptTemplate
@@ -73,15 +74,15 @@ def main():
     
 
 
-    st.write('可根据需要修改研报下载参数。')
+    st.write('研报下载参数：')
     end_page = st.number_input('下载研报数据的页数（新报告在最前，每页50条）:', value=config['end_page'])
 
-    st.write('可根据需要修改偿债因子参数。')
+    st.write('短期偿债因子参数：')
     solvency_ratio_margin = st.number_input('短期偿债因子不低于（越高越好）:', value=config['solvency_ratio_margin'])
     price_change_margin_lowerbound = st.number_input('过去一年历史收益不低于:', value=config['price_change_margin_lowerbound'])
     price_change_margin_higherbound = st.number_input('过去一年历史收益不高于:', value=config['price_change_margin_higherbound'])
     
-    st.write('可根据需要修改凯利因子参数。')
+    st.write('凯利因子参数：')
     kelly_fraction = st.number_input('凯利公式持仓比例（1为100%持仓）:', value=config['kelly_fraction'])
     max_lookback_years = st.number_input('回看历史数据年数（不足一年以小数形式体现）:', value=config['max_lookback_years'])
     capital = st.number_input('总资本:', value=config['capital'])
@@ -93,37 +94,51 @@ def main():
     
     # Button for all actions.
     if st.button('开始寻股'):
-        st.write(utils.printoutHeader())
-        st.write('首先开始下载研报数据……')
+        
+        progress_bar = st.progress(0)
+        progress_display = st.empty()
+        progress_display.write(f'首先开始下载研报数据……')
         
         from . import eastmoney_parser
         eastmoney_parser = reload(eastmoney_parser)
         scraper = eastmoney_parser.ReportScraper()
+        progress_bar.progress(0.03)
         scraper.run(end_page=end_page)
-        st.write(utils.printoutHeader())
-        st.write('研报下载完成。开始计算短期偿债因子……')
+        time.sleep(10)
+        progress_bar.progress(0.15)
+        progress_display.write(f'研报下载完成。开始计算短期偿债因子……')
 
         from . import ratio_calculator
         ratio_calculator = reload(ratio_calculator)
         file_path = config['broker_picked_stock_path']
         calculator = ratio_calculator.ShortTermSolvencyCalculator(config, file_path)
+        progress_bar.progress(0.20)
         calculator.calculate(solvency_ratio_margin=solvency_ratio_margin,
                              price_change_margin_lowerbound=price_change_margin_lowerbound,
-                             price_change_margin_higherbound=price_change_margin_higherbound)
-        st.write(utils.printoutHeader())
-        st.write('短期偿债因子计算完成。开始计算凯利持仓建议……')
-
+                             price_change_margin_higherbound=price_change_margin_higherbound,
+                             progress_bar=progress_bar,
+                             progress_display=progress_display)
+        progress_bar.progress(0.90)
+        progress_display.write(f'短期偿债因子计算完成。开始计算凯利持仓建议……')
+        time.sleep(10)
+        #st.write(utils.printoutHeader())
+        #st.write('短期偿债因子计算完成。开始计算凯利持仓建议……')
+        
         from . import kelly
         kelly = reload(kelly)
         kc = kelly.KellyCriterion()
         kc.calculateKC(kelly_fraction=kelly_fraction,max_lookback_years=max_lookback_years,capital=capital)
-        st.write(utils.printoutHeader())
-        st.write('凯利公式持仓比例计算完成。持仓结果如下：')
+        #st.write(utils.printoutHeader())
+        #st.write('凯利公式持仓比例计算完成。持仓结果如下：')
+        progress_bar.progress(1.0)
+        progress_display.write(f'凯利公式持仓比例计算完成。持仓结果如下：')
 
         data_path = config['data_path']
         kc_file_path = data_path+'kelly/grpKCResultData/tblStockPickedKC.csv'
         df = pd.read_csv(kc_file_path)
         st.dataframe(df)
+
+        
 
 
 
