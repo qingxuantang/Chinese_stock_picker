@@ -29,8 +29,9 @@ class ShortTermSolvencyCalculator:
         self.broker_picked_stock_path = config['broker_picked_stock_path']
 
 
-    def aShareSymbolIteration(self,file_path,st_column=1):
+    def aShareSymbolIteration(self,file_path,st_column=1,rating_column=6):
         stock_df = pd.read_excel(file_path)
+        stock_df = stock_df[(stock_df[rating_column] != '调低') & (stock_df[rating_column] != '无')]
         stock_df[st_column] = stock_df[st_column].astype(str)
         stock_df[st_column] = stock_df[st_column].str.zfill(6)
         return stock_df[st_column]
