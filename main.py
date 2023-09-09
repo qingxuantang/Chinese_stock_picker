@@ -9,8 +9,9 @@ config = utils.config
 
 if __name__ == '__main__' :
 
-    thread = threading.Thread(target=app.main())
-    thread.start()
+    #thread = threading.Thread(target=app.main())
+    #thread = threading.Thread(target=app.main)
+    #thread.start()
     # Run app.py for streamlit app
-    #app.main()
+    app.main()
     

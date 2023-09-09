@@ -92,9 +92,11 @@ def main():
 
     #***************************************************
     
+  
+
+
     # Button for all actions.
     if st.button('开始寻股'):
-        
         progress_bar = st.progress(0)
         progress_display = st.empty()
         progress_display.write(f'首先开始下载研报数据……')
@@ -114,32 +116,26 @@ def main():
         calculator = ratio_calculator.ShortTermSolvencyCalculator(config, file_path)
         progress_bar.progress(0.20)
         calculator.calculate(solvency_ratio_margin=solvency_ratio_margin,
-                             price_change_margin_lowerbound=price_change_margin_lowerbound,
-                             price_change_margin_higherbound=price_change_margin_higherbound,
-                             progress_bar=progress_bar,
-                             progress_display=progress_display)
+                            price_change_margin_lowerbound=price_change_margin_lowerbound,
+                            price_change_margin_higherbound=price_change_margin_higherbound,
+                            progress_bar=progress_bar,
+                            progress_display=progress_display)
         progress_bar.progress(0.90)
         progress_display.write(f'短期偿债因子计算完成。开始计算凯利持仓建议……')
         time.sleep(10)
-        #st.write(utils.printoutHeader())
-        #st.write('短期偿债因子计算完成。开始计算凯利持仓建议……')
         
         from . import kelly
         kelly = reload(kelly)
         kc = kelly.KellyCriterion()
         kc.calculateKC(kelly_fraction=kelly_fraction,max_lookback_years=max_lookback_years,capital=capital)
-        #st.write(utils.printoutHeader())
-        #st.write('凯利公式持仓比例计算完成。持仓结果如下：')
         progress_bar.progress(1.0)
-        progress_display.write(f'凯利公式持仓比例计算完成。持仓结果如下：')
+        #progress_display.write(f'凯利公式持仓比例计算完成。持仓结果如下：')
+        progress_display.write(f'凯利公式持仓比例计算完成。')
 
         data_path = config['data_path']
         kc_file_path = data_path+'kelly/grpKCResultData/tblStockPickedKC.csv'
         df = pd.read_csv(kc_file_path)
         st.dataframe(df)
-
-        
-
 
 
 
