@@ -75,7 +75,8 @@ def main():
 
 
     st.write('研报下载参数：')
-    end_page = st.number_input('下载研报数据的页数（新报告在最前，每页50条）:', value=config['end_page'])
+    start_page = st.number_input('研报下载初始页（默认第1页）:', value=config['start_page'])
+    end_page = st.number_input('研报下载结束页（新报告在最前，每页50条）:', value=config['end_page'])
 
     st.write('短期偿债因子参数：')
     solvency_ratio_margin = st.number_input('短期偿债因子不低于（越高越好）:', value=config['solvency_ratio_margin'])
@@ -105,7 +106,7 @@ def main():
         eastmoney_parser = reload(eastmoney_parser)
         scraper = eastmoney_parser.ReportScraper()
         progress_bar.progress(0.03)
-        scraper.run(end_page=end_page)
+        scraper.run(end_page=end_page,start_page=start_page)
         time.sleep(10)
         progress_bar.progress(0.15)
         progress_display.write(f'研报下载完成。开始计算短期偿债因子……')
@@ -115,11 +116,16 @@ def main():
         file_path = config['broker_picked_stock_path']
         calculator = ratio_calculator.ShortTermSolvencyCalculator(config, file_path)
         progress_bar.progress(0.20)
+
+        symbol_picked_num = len(calculator.pickSymbol())
+        st.write(f"备选股票标的有 {symbol_picked_num} 只。")
+
         calculator.calculate(solvency_ratio_margin=solvency_ratio_margin,
                             price_change_margin_lowerbound=price_change_margin_lowerbound,
                             price_change_margin_higherbound=price_change_margin_higherbound,
                             progress_bar=progress_bar,
-                            progress_display=progress_display)
+                            progress_display=progress_display,
+                            symbol_picked=calculator.pickSymbol())
         progress_bar.progress(0.90)
         progress_display.write(f'短期偿债因子计算完成。开始计算凯利持仓建议……')
         time.sleep(10)

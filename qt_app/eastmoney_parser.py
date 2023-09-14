@@ -19,7 +19,7 @@ class ReportScraper:
         self.folder_path = 'grpStockReportSummary/'
 
 
-    async def main(self,end_page):
+    async def main(self,end_page,start_page):
         # 启动浏览器
         browser = await launch(headless=True, args=['--no-sandbox'])
         page = await browser.newPage()
@@ -27,12 +27,15 @@ class ReportScraper:
         await page.goto(url)
         print('打开网站完成')
 
-        for pagenumber in range(1, end_page+1):
+        pagenumber_range = range(start_page, end_page+1)
+        for pagenumber in pagenumber_range:
             print(f'开始翻页，现在是第{pagenumber}页')
 
             # 定位输入框，清空并输入页码
             await page.type('#gotopageindex', '', {'delay': 50})
             await page.keyboard.press('Backspace')
+            await page.keyboard.press('Backspace')
+            await page.keyboard.press('Backspace') #Do the backspace 3rd times in case of 3 digits
             await page.type('#gotopageindex', str(pagenumber), {'delay': 50})
             await page.click('input[value="Go"]')
 
@@ -74,33 +77,27 @@ class ReportScraper:
 
         # Merge tables: only merge the latest downloaded tables.
         path = self.data_path + self.pkg_path + self.folder_path
-        all_files = [os.path.join(path, f) for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))]
-
+        file_used = [f"{i}.xlsx" for i in range(start_page,end_page+1)]
+        
         all_dfs = []
-        for file in sorted(all_files[:end_page+1]):
-            df = pd.read_excel(file)
+        for file in file_used:
+            df = pd.read_excel(path+file)
             df = df.drop(df.index[0])  # 删除第一行
             all_dfs.append(df)
 
         final_df = pd.concat(all_dfs, ignore_index=True)
         final_df.to_excel(os.path.join(path, "stock.xlsx"), index=False)
-        print('所有表格合并完成')
+        print('所有表格合并完成') 
 
 
-    #def run(self):
-    #    loop = asyncio.new_event_loop()
-    #    asyncio.set_event_loop(loop)
-    #    asyncio.get_event_loop().run_until_complete(self.main())    
-
-
-    def run_async_code(self,end_page):
+    def run_async_code(self,end_page,start_page):
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        loop.run_until_complete(self.main(end_page=end_page))
+        loop.run_until_complete(self.main(end_page=end_page,start_page=start_page))
 
     
-    def run(self,end_page):
-        process = Process(target=self.run_async_code, args=(end_page,))
+    def run(self,end_page,start_page):
+        process = Process(target=self.run_async_code, args=(end_page,start_page,))
         process.start()
         process.join()
 

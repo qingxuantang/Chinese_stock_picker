@@ -118,13 +118,16 @@ class ShortTermSolvencyCalculator:
         return price_change
 
 
-    def calculate(self,solvency_ratio_margin,price_change_margin_lowerbound,price_change_margin_higherbound, progress_bar=None, progress_display=None):
-        st_column = 1
-
+    def pickSymbol(self):
         symbol_picked = self.aShareSymbolIteration(file_path=self.file_path)
         symbol_picked = list(set(symbol_picked)) # Getting rid of duplicates.
-        print(utils.printoutHeader())
-        print('Total Count of Broker Picked Symbols: ',len(symbol_picked))
+        return symbol_picked
+
+
+    def calculate(self,solvency_ratio_margin,price_change_margin_lowerbound,price_change_margin_higherbound, symbol_picked, progress_bar=None, progress_display=None):
+        st_column = 1
+
+        
 
         if progress_bar and progress_display:
             progress_bar.progress(0.30)
@@ -165,3 +168,4 @@ class ShortTermSolvencyCalculator:
         sorted_df = sorted_df[(sorted_df['price_change_ratio'] >= price_change_margin_lowerbound) & (sorted_df['price_change_ratio'] <= price_change_margin_higherbound)]
         sorted_df = sorted_df.sort_values(by=["short_term_solvency_ratio"], ascending=False)
         utils.savingDfToCsv(path_head='tbl', exchange='', path_tail='.csv', df_name=sorted_df, data_path=self.config['data_path'], mode='w', path_add='StockPickedWithSolvencyR', suffix=utils.timestamp,pkg_path='short_term_solvency_ratio/') # If generating date is different, will save to a new file.
+

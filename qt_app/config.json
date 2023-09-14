@@ -1,13 +1,13 @@
 {
     "kelly_fraction": 1,
     "unc_kelly_fraction": 0.15,
-    "max_lookback_years": 0.13,
+    "max_lookback_years": 3.0,
     "estimation_mode": ["hist","fixed","custom"],
     "fixed_annual_risk_free_rate": 0.0290,
     "fixed_annual_excess_return_rate": 0.02,
     "use_Ledoit_Wolf": true,
     "max_position_size": 0.99,
-    "capital": 100000,
+    "capital": 600000,
     
     "strategy_name": "str3",
     "trade_type": ["sim","real"],
@@ -24,7 +24,8 @@
     "fi_list_yfinance":["income_stmt","quarterly_income_stmt","balance_sheet","quarterly_balance_sheet","cashflow","quarterly_cashflow"],
     "broker_picked_stock_path":"../data/eastmoney_parser/grpStockReportSummary/stock.xlsx",
     "report_url": "https://data.eastmoney.com/report/stock.jshtml",
-    "end_page": 2,
+    "start_page": 1,
+    "end_page": 5,
 
 
     "solvency_ratio_margin": 3,
