@@ -34,7 +34,7 @@ interval_rf = ten_year_yield.iloc[-1].values[0] / 100 #Retreive the latest value
 
 def loadJSON(json_name):
     import json
-    with open('./'+pkg_path+json_name+'.json') as f:
+    with open('./'+pkg_path+json_name+'.json', encoding='utf-8') as f:
         json_data = json.load(f)
     return json_data
 

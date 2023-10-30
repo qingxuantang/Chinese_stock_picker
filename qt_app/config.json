@@ -7,7 +7,7 @@
     "fixed_annual_excess_return_rate": 0.02,
     "use_Ledoit_Wolf": true,
     "max_position_size": 0.99,
-    "capital": 600000,
+    "capital": 500000,
     
     "strategy_name": "str3",
     "trade_type": ["sim","real"],
@@ -25,12 +25,13 @@
     "broker_picked_stock_path":"../data/eastmoney_parser/grpStockReportSummary/stock.xlsx",
     "report_url": "https://data.eastmoney.com/report/stock.jshtml",
     "start_page": 1,
-    "end_page": 5,
-
+    "end_page": 50,
 
     "solvency_ratio_margin": 3,
     "price_change_margin_lowerbound": -0.01,
-    "price_change_margin_higherbound": 0.15
+    "price_change_margin_higherbound": 0.15,
+
+    "time_value":{"一周内":"1","一月内":"2","半年内":"3","一年内":"4","两年内":"5"}
 }
 
 
