@@ -1,6 +1,7 @@
 
 def main():
     '''Main function for the app.'''
+    import re
     import os
     import time
     import streamlit as st 
@@ -19,6 +20,9 @@ def main():
     os.environ['OPENAI_API_KEY'] = openai_apikey
     config = utils.config
 
+    pkg_path = utils.pkg_path
+    filename = re.findall('(.*).py', os.path.basename(__file__)) #name excluding extension
+    utils.errorLog(pkg_path=pkg_path,filename=filename)
     
     # App framework
     st.title('🦜🔗 A-Shares Stock Picker')
@@ -76,9 +80,12 @@ def main():
 
     st.write('研报下载参数：')
     start_page = st.number_input('研报下载初始页（默认第1页）:', value=config['start_page'])
-    #end_page = st.number_input('研报下载结束页（新报告在最前，每页50条）:', value=config['end_page'])
-
-    time_period_key = st.text_input('研报下载周期（一周内/一月内/半年内/一年内/两年内）:', value=list(config['time_value'].keys())[1])
+    
+    market_source_key = st.text_input('股票市场选择（中国/国际）:', value=list(config['stock_market_source'].keys())[0])
+    if market_source_key == '中国':
+        time_period_key = st.text_input('东方财富网研报周期（一周内/一月内/半年内/一年内/两年内）:', value=list(config['time_value'].keys())[0])
+    elif market_source_key == '国际':
+        time_period_key = st.text_input('YFinance研报周期（Week/Month/Year）:', value=config['time_value_yfinance'][0])
 
     st.write('短期偿债因子参数：')
     solvency_ratio_margin = st.number_input('短期偿债因子不低于（越高越好）:', value=config['solvency_ratio_margin'])
@@ -93,42 +100,62 @@ def main():
    
     
 
-    #***************************************************
     
   
 
 
+
     # Button for all actions.
     if st.button('开始寻股'):
+
         try:
             progress_bar = st.progress(0)
             progress_display = st.empty()
             progress_display.write(f'首先开始下载研报数据……')
-            
-            from . import eastmoney_parser
-            eastmoney_parser = reload(eastmoney_parser)
-            scraper = eastmoney_parser.ReportScraper()
-            progress_bar.progress(0.03)
-            scraper.run(start_page=start_page,time_period_key=time_period_key)
+
+            if market_source_key == '中国':
+                exchange=''
+                from . import eastmoney_parser
+                eastmoney_parser = reload(eastmoney_parser)
+                scraper = eastmoney_parser.ReportScraper()
+                progress_bar.progress(0.03)
+                scraper.run(start_page=start_page,time_period_key=time_period_key)
+
+                file_path = config['broker_picked_stock_path']
+                st_column = str(1)
+            elif market_source_key == '国际':
+                exchange='us'
+                from . import yfinance_report_parser
+                yfinance_report_parser = reload(yfinance_report_parser)
+                scraper = yfinance_report_parser.ReportScraper()
+                progress_bar.progress(0.03)
+                scraper.run()
+
+                file_path = config['yfinance_picked_stock_path']
+                st_column = 'symbols'
+
             time.sleep(10)
             progress_bar.progress(0.15)
             progress_display.write(f'研报下载完成。开始计算短期偿债因子……')
 
             from . import ratio_calculator
             ratio_calculator = reload(ratio_calculator)
-            file_path = config['broker_picked_stock_path']
             calculator = ratio_calculator.ShortTermSolvencyCalculator(config, file_path)
             progress_bar.progress(0.20)
 
-            symbol_picked_num = len(calculator.pickSymbol())
+            symbol_picked_num = len(calculator.pickSymbol(market_source_key=market_source_key,file_path=file_path))
             st.write(f"备选股票标的有 {symbol_picked_num} 只。")
-
+            
             calculator.calculate(solvency_ratio_margin=solvency_ratio_margin,
                                 price_change_margin_lowerbound=price_change_margin_lowerbound,
                                 price_change_margin_higherbound=price_change_margin_higherbound,
                                 progress_bar=progress_bar,
                                 progress_display=progress_display,
-                                symbol_picked=calculator.pickSymbol())
+                                symbol_picked=calculator.pickSymbol(market_source_key=market_source_key,file_path=file_path),
+                                market_source_key=market_source_key,
+                                st_column=st_column,
+                                exchange=exchange)
+                
             progress_bar.progress(0.90)
             progress_display.write(f'短期偿债因子计算完成。开始计算凯利持仓建议……')
             time.sleep(10)
@@ -136,15 +163,20 @@ def main():
             from . import kelly
             kelly = reload(kelly)
             kc = kelly.KellyCriterion()
-            kc.calculateKC(kelly_fraction=kelly_fraction,max_lookback_years=max_lookback_years,capital=capital)
+            kc.calculateKC(kelly_fraction=kelly_fraction,max_lookback_years=max_lookback_years,capital=capital,exchange=exchange)
             progress_bar.progress(1.0)
-            #progress_display.write(f'凯利公式持仓比例计算完成。持仓结果如下：')
             progress_display.write(f'凯利公式持仓比例计算完成。')
 
             data_path = config['data_path']
             kc_file_path = data_path+'kelly/grpKCResultData/tblStockPickedKC.csv'
             df = pd.read_csv(kc_file_path)
             st.dataframe(df)
+
+            df2email = utils.symbolPickedToHtml(df=df)
+            print(df2email)
+            utils.msgToEmail(part=df2email,market_source_key=market_source_key)
+            
+
         except Exception as e:
             print(e)
             print('程序出错，请重新运行。')
