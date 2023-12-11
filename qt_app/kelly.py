@@ -40,7 +40,7 @@ class KellyCriterion():
         solvers.options['mumps_mem_percent'] = 10000
 
 
-    def loadClosePrice(self,max_lookback_years):
+    def loadClosePrice(self,max_lookback_years,exchange):
         "load prices from web"
         start_date = (datetime.today()
                     - timedelta(days=365*max_lookback_years)).date()
@@ -48,20 +48,23 @@ class KellyCriterion():
 
         #import stock symbols from short_term_solvency_ratio's data
         #eg. tblStockPickedWithSolvencyR2023-08-19.csv
-        st_column=str(1)
+        #st_column=str(1)
         folder_path = 'short_term_solvency_ratio/'
         #csv_filepath = glob.glob(self.data_path+folder_path+'*.csv')[-1]
         #test
-        csv_filepath = glob.glob(self.data_path + folder_path + 'tblStockPickedWithSolvencyR*.csv')
-        csv_filepath = sorted(csv_filepath, key=lambda x: datetime.strptime(x.split('tblStockPickedWithSolvencyR')[-1].rstrip('.csv'), '%Y-%m-%d'))
+        csv_filepath = glob.glob(self.data_path + folder_path + 'tbl' + exchange + 'StockPickedWithSolvencyR*.csv')
+        csv_filepath = sorted(csv_filepath, key=lambda x: datetime.strptime(x.split(f'tbl{exchange}StockPickedWithSolvencyR')[-1].rstrip('.csv'), '%Y-%m-%d'))
         csv_filepath = csv_filepath[-1]
         
         print("csv_filepath: ",csv_filepath)
         
         csv_filename = os.path.basename(csv_filepath)
-        stock_df = utils.loadDfFromCsv(path_head=csv_filename,exchange='',path_tail='',data_path=self.data_path,pkg_path=folder_path)
-        stock_df[st_column] = stock_df[st_column].astype(str)
-        stock_df[st_column] = stock_df[st_column].str.zfill(6)
+        stock_df = utils.loadDfFromCsv(path_head=csv_filename,path_tail='',data_path=self.data_path,pkg_path=folder_path) #exchange set to '' in this case
+
+        st_column=str(1) if str(1) in stock_df.columns else 'symbols'
+        if st_column == str(1):
+            stock_df[st_column] = stock_df[st_column].astype(str)
+            stock_df[st_column] = stock_df[st_column].str.zfill(6)
         symbol_list = list(set(stock_df[st_column].values.tolist()))
 
         if len(symbol_list) > 0:
@@ -69,11 +72,11 @@ class KellyCriterion():
             stock_picked_price_data = pd.DataFrame()
             for st in symbol_list:
                 try:
-                    e_yahooFinance = utils.listingSuffixForParsing(exchange=None,symbol=st)[1]
+                    e_yahooFinance = utils.listingSuffixForParsing(exchange=exchange,symbol=st)[1]
                     symbol = st+e_yahooFinance
                     price_data = yf.download(symbol, start=str(start_date), end=str(end_date),
                                             interval='1d', auto_adjust=True, threads=True)
-                    utils.savingDfToCsv(path_head='tbl', exchange='', path_tail='.csv', df_name=price_data, data_path=self.data_path, mode='w', path_add=st+'TI',folder_path='grpTiData/', pkg_path='kelly/')
+                    utils.savingDfToCsv(path_head='tbl', exchange=exchange, path_tail='.csv', df_name=price_data, data_path=self.data_path, mode='w', path_add=st+'TI',folder_path='grpTiData/', pkg_path='kelly/')
                     price_data = price_data['Close']
                     price_data.name = symbol
                     price_data = price_data.to_frame()
@@ -83,7 +86,7 @@ class KellyCriterion():
                     continue
 
             stock_picked_price_data = stock_picked_price_data.sort_index()
-            utils.savingDfToCsv(path_head='tbl', exchange='', path_tail='.csv', df_name=stock_picked_price_data, data_path=self.config['data_path'], mode='w', path_add='StockPickedTI', pkg_path='kelly/',index=True)
+            utils.savingDfToCsv(path_head='tbl', exchange=exchange, path_tail='.csv', df_name=stock_picked_price_data, data_path=self.config['data_path'], mode='w', path_add='StockPickedTI', pkg_path='kelly/',index=True)
         return stock_picked_price_data
 
 
@@ -199,11 +202,11 @@ class KellyCriterion():
         return correlation
     
 
-    def calculateKC(self,kelly_fraction,max_lookback_years,capital):
+    def calculateKC(self,kelly_fraction,max_lookback_years,capital,exchange):
         "Load data and begin KC calculation for multivariate portfolio."
         try:
             estimation_mode = self.config['estimation_mode'][0] # hist,fixed,custom
-            price_df=self.loadClosePrice(max_lookback_years=max_lookback_years)
+            price_df=self.loadClosePrice(max_lookback_years=max_lookback_years,exchange=exchange)
             if 'Date' in price_df.columns:
                 price_df = price_df.set_index('Date')
             excess_return_daily = self.annualExcessReturn(price_df=price_df)
