@@ -2,11 +2,29 @@ import asyncio
 from pyppeteer import launch
 import pandas as pd
 import os
+import re
 from bs4 import BeautifulSoup
 from multiprocessing import Process
+import random
 from importlib import reload
 from . import utils
 utils = reload(utils)
+
+pkg_path = utils.pkg_path
+filename = re.findall('(.*).py', os.path.basename(__file__)) #name excluding extension
+utils.errorLog(pkg_path=pkg_path,filename=filename)
+
+
+#*****************************************
+# BrightData Proxy
+#China
+username  = utils.loadJSON(json_name='brdproxy')['cn_username']
+password = utils.loadJSON(json_name='brdproxy')['cn_password']
+port = utils.loadJSON(json_name='brdproxy')['port']
+session_id = random.random()
+#China
+proxy_server = f'http://{username}-country-cn-session-{session_id}:{password}@brd.superproxy.io:{port}'
+#*****************************************
 
 
 # Creating the class with full functionality
@@ -37,14 +55,18 @@ class ReportScraper:
         else:
             return 0
         
-        
+
+    
+
 
     async def main(self,start_page,time_period_key):
         # 启动浏览器
         browser = await launch(headless=True, args=['--no-sandbox'])
         page = await browser.newPage()
+
+
         url = self.config['report_url']
-        await page.goto(url)
+        await page.goto(url, {'timeout': 60000})
         print('打开网站完成')
         await asyncio.sleep(5)
 
@@ -56,7 +78,7 @@ class ReportScraper:
         time_period_value = self.config['time_value'][time_period_key]
         await page.select(dropdown_selector, str(time_period_value)) 
         await asyncio.sleep(5)
-        print(f'成功选择研报发布周期: {time_period_key}') #eg. 选择研报发布时间范围: 一月内
+        print(f'成功选择研报发布周期: {time_period_key}') #eg. 选择研报发布时间范围
 
         # Retrieve the total number of pages
         content = await page.content()
@@ -104,31 +126,41 @@ class ReportScraper:
             df = pd.DataFrame(rows)
             #print("df: ",df)
             
+
+
+            #*****************************************
             # 保存到Excel
-            path = self.data_path + self.pkg_path + self.folder_path + f"{pagenumber}.xlsx"
-            #print("excel saving path: ",path)
-            df.to_excel(path, index=False)
-            print(f'保存为{pagenumber}.xlsx完成')
+            #path = self.data_path + self.pkg_path + self.folder_path + f"{pagenumber}.xlsx"
+            #df.to_excel(path, index=False)
+            #print(f'保存为{pagenumber}.xlsx完成')
+
+            #Save to CSV
+            utils.savingDfToCsv(path_head=f"{pagenumber}",exchange='',path_tail='.csv',df_name=df,data_path=self.data_path,pkg_path=self.pkg_path,folder_path=self.folder_path)
+            print(f'保存为{pagenumber}.csv完成')
 
         await browser.close()
 
         # Merge tables: only merge the latest downloaded tables.
-        path = self.data_path + self.pkg_path + self.folder_path
-        file_used = [f"{i}.xlsx" for i in range(start_page,total_page+1)]
+        #path = self.data_path + self.pkg_path + self.folder_path
+        #file_used = [f"{i}.xlsx" for i in range(start_page,total_page+1)]
+        file_used = [f"{i}.csv" for i in range(start_page,total_page+1)]
         
         all_dfs = []
         for file in file_used:
-            df = pd.read_excel(path+file)
+            #df = pd.read_excel(path+file)
+            #df = pd.read_csv(path+file,encoding='GBK')
+            df = utils.loadDfFromCsv(path_head=file,path_tail='',data_path=self.data_path,pkg_path=self.pkg_path,folder_path=self.folder_path)
             df = df.drop(df.index[0])  # 删除第一行
             all_dfs.append(df)
 
         final_df = pd.concat(all_dfs, ignore_index=True)
-        final_df.to_excel(os.path.join(path, "stock.xlsx"), index=False)
-        print('所有表格合并完成') 
-
-
+        #final_df.to_excel(os.path.join(path, "stock.xlsx"), index=False)
+        #final_df.to_csv(os.path.join(path, "stock.csv"), index=False,encoding='GBK')
+        utils.savingDfToCsv(path_head='stock',exchange='',path_tail='.csv',df_name=final_df,data_path=self.data_path,pkg_path=self.pkg_path,folder_path=self.folder_path)
+        print('所有表格合并完成')
+        #*****************************************
     
-    
+
         
 
     def run_async_code(self,start_page,time_period_key):
